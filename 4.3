@@ -1,1 +1,60 @@
 
+const express = require("express");
+const redis = require("redis");
+
+const app = express();
+app.use(express.json());
+
+// Redis client
+const client = redis.createClient();
+
+client.connect();
+
+// Seats (in-memory)
+let seats = {
+    A1: false,
+    A2: false,
+    A3: false
+};
+
+// Book seat
+app.post("/book/:seat", async (req, res) => {
+    const seat = req.params.seat;
+
+    // Lock key
+    const lockKey = `lock:${seat}`;
+
+    // Try to lock seat (SETNX)
+    const isLocked = await client.set(lockKey, "locked", {
+        NX: true,
+        EX: 10 // lock expires in 10 seconds
+    });
+
+    if (!isLocked) {
+        return res.json({ message: "Seat is being booked by someone else" });
+    }
+
+    // Check if already booked
+    if (seats[seat]) {
+        await client.del(lockKey);
+        return res.json({ message: "Seat already booked" });
+    }
+
+    // Book seat
+    seats[seat] = true;
+
+    // Release lock
+    await client.del(lockKey);
+
+    res.json({ message: `Seat ${seat} booked successfully` });
+});
+
+// View seats
+app.get("/seats", (req, res) => {
+    res.json(seats);
+});
+
+// Start server
+app.listen(3000, () => {
+    console.log("Server running on http://localhost:3000");
+});
