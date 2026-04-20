@@ -1,1 +1,64 @@
+const express = require("express");
+const app = express();
 
+app.use(express.json());
+
+// In-memory data (no DB)
+let cards = [
+    { id: 1, suit: "Hearts", value: "A" },
+    { id: 2, suit: "Spades", value: "K" }
+];
+
+// GET all cards
+app.get("/cards", (req, res) => {
+    res.json(cards);
+});
+
+// GET single card
+app.get("/cards/:id", (req, res) => {
+    const card = cards.find(c => c.id == req.params.id);
+    res.json(card || { message: "Not found" });
+});
+
+// POST add card
+app.post("/cards", (req, res) => {
+    const { suit, value } = req.body;
+
+    if (!suit || !value) {
+        return res.json({ message: "Invalid data" });
+    }
+
+    const newCard = {
+        id: Date.now(),
+        suit,
+        value
+    };
+
+    cards.push(newCard);
+    res.json(newCard);
+});
+
+// PUT update card
+app.put("/cards/:id", (req, res) => {
+    const card = cards.find(c => c.id == req.params.id);
+
+    if (!card) {
+        return res.json({ message: "Not found" });
+    }
+
+    card.suit = req.body.suit || card.suit;
+    card.value = req.body.value || card.value;
+
+    res.json(card);
+});
+
+// DELETE card
+app.delete("/cards/:id", (req, res) => {
+    cards = cards.filter(c => c.id != req.params.id);
+    res.json({ message: "Deleted successfully" });
+});
+
+// Start server
+app.listen(3000, () => {
+    console.log("Server running on http://localhost:3000");
+});
