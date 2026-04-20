@@ -1,1 +1,57 @@
+let employees = JSON.parse(localStorage.getItem("employees")) || [];
 
+// Display employees
+function displayEmployees(list = employees) {
+    const output = document.getElementById("output");
+    output.innerHTML = "";
+
+    list.forEach((emp, index) => {
+        output.innerHTML += `
+            <div>
+                ${emp.name} - Age: ${emp.age}
+                <button onclick="deleteEmployee(${index})">Delete</button>
+            </div>
+        `;
+    });
+}
+
+// Add employee
+function addEmployee() {
+    const name = document.getElementById("name").value;
+    const age = document.getElementById("age").value;
+
+    if (!name || isNaN(age)) {
+        alert("Enter valid details");
+        return;
+    }
+
+    employees.push({ name, age });
+
+    localStorage.setItem("employees", JSON.stringify(employees));
+
+    displayEmployees();
+
+    document.getElementById("name").value = "";
+    document.getElementById("age").value = "";
+}
+
+// Delete employee
+function deleteEmployee(index) {
+    employees.splice(index, 1);
+    localStorage.setItem("employees", JSON.stringify(employees));
+    displayEmployees();
+}
+
+// Search employee
+function searchEmployee() {
+    const value = document.getElementById("search").value.toLowerCase();
+
+    const filtered = employees.filter(emp =>
+        emp.name.toLowerCase().includes(value)
+    );
+
+    displayEmployees(filtered);
+}
+
+// Load on start
+displayEmployees();
